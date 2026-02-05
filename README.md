@@ -14,10 +14,10 @@ The dataset contains 1,000 patient records with 54 features including:
 
 # Objective
 Analyze Medical Insurance Cost Prediction (of 100,000) patients, and classify said patients’ healthcare insurance based on a multitude of factors:
-  Demographic
-  Socioeconomic Status
-  Insurance plans
-  Lifestyle
+  - Demographic
+  - Socioeconomic Status
+  - Insurance plans
+  = Lifestyle
 From a low-high quality insurance standing
 
 
