@@ -26,7 +26,7 @@ The dataset contains 1,000 patient records with 54 features including:
 ### Installation
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/medical-insurance-analytics.git
+git clone https://github.com/gyatgitpandaclatt/171PROJECT.git
 cd medical-insurance-analytics
 
 # Install dependencies
