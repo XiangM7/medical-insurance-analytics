@@ -17,7 +17,7 @@ Analyze Medical Insurance Cost Prediction (of 100,000) patients, and classify sa
   - Demographic
   - Socioeconomic Status
   - Insurance plans
-  = Lifestyle
+  - Lifestyle
 From a low-high quality insurance standing
 
 
