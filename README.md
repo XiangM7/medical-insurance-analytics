@@ -11,11 +11,26 @@ The dataset contains 1,000 patient records with 54 features including:
 - Financial information (income, medical costs, premiums)
 
 ## 🎯 Project Goals
-1. Exploratory Data Analysis (EDA) of insurance and health data
-2. Predict annual medical costs and insurance premiums
-3. Identify high-risk patients
-4. Analyze factors affecting insurance claims
-5. Build a risk assessment model
+
+# Objective
+Analyze Medical Insurance Cost Prediction (of 100,000) patients, and classify said patients’ healthcare insurance based on a multitude of factors:
+  Demographic
+  Socioeconomic Status
+  Insurance plans
+  Lifestyle
+From a low-high quality insurance standing
+
+
+
+
+# Rationale 
+Medical insurance costs are influenced by a wide range of demographic, lifestyle, clinical factors, making cost prediction a challenging and important problem. Accurately predicting medical insurance expenses can help improve risk assessment and support data-driven decision making in healthcare and insurance systems. Due to the complex relationships among these factors, machine learning methods are well suited for this task. 
+
+
+
+
+# Model/Approach
+In order to effectively classify our data, applying logistic regression to all relevant variables is a great place to start, also applying regularization on variables such as age, marital status, doctor visits, etc., and including interaction terms for said variables for more flexibility.
 
 ## 🛠️ Setup
 
