@@ -1,0 +1,38 @@
+# Configuration for Medical Insurance Analytics
+
+paths:
+  data_dir: "data"
+  reports_dir: "reports"
+  models_dir: "models"
+
+files:
+  raw_data: "medical_insurance.csv"
+  processed_data: "medical_insurance_processed.csv"
+
+analysis:
+  target_variables:
+    - "annual_medical_cost"
+    - "annual_premium"
+    - "is_high_risk"
+  test_size: 0.2
+  random_state: 42
+  cv_folds: 5
+
+models:
+  regression:
+    - "linear"
+    - "ridge"
+    - "lasso"
+    - "random_forest"
+    - "xgboost"
+    - "lightgbm"
+  classification:
+    - "logistic"
+    - "random_forest"
+    - "xgboost"
+    - "lightgbm"
+
+visualization:
+  style: "seaborn"
+  color_palette: "husl"
+  figure_size: [12, 8]
