@@ -3,7 +3,7 @@
 A comprehensive analysis and predictive modeling framework for medical insurance data.
 
 ## 📊 Dataset Overview
-The dataset contains 1,000 patient records with 54 features including:
+The dataset contains 100,000 patient records with 54 features including:
 - Demographic information (age, sex, region, education, etc.)
 - Health metrics (BMI, blood pressure, HbA1c, LDL, chronic conditions)
 - Insurance details (plan type, network tier, deductible, copay)
