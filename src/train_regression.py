@@ -1,20 +1,25 @@
-# train_regression.py
+# src/train_regression.py
 import argparse
 import json
 import os
+import warnings
 from datetime import datetime
 
+import joblib
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from sklearn.impute import SimpleImputer
+from sklearn.linear_model import ElasticNet, Lasso, LinearRegression, Ridge
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-import joblib
+
+# silence noisy warnings so terminal output is readable
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
 
 
 def _infer_numeric_and_categorical(X: pd.DataFrame):
@@ -56,22 +61,23 @@ def _make_models(random_state: int):
 
 
 def _param_grids():
+    # keep grids small so it runs fast and stable
     return {
         "linear": {},
-        "ridge": {"model__alpha": [0.01, 0.1, 1.0, 10.0, 100.0]},
+        "ridge": {"model__alpha": [0.1, 1.0, 10.0, 100.0]},
         "lasso": {"model__alpha": [0.01, 0.1, 1.0, 10.0]},
         "elasticnet": {
-            "model__alpha": [0.001, 0.01, 0.1, 1.0],
-            "model__l1_ratio": [0.1, 0.5, 0.9],
+            "model__alpha": [0.01, 0.1, 1.0],
+            "model__l1_ratio": [0.2, 0.5, 0.8],
         },
         "rf": {
-            "model__n_estimators": [200, 500],
-            "model__max_depth": [None, 6, 12],
+            "model__n_estimators": [300],
+            "model__max_depth": [None, 12],
             "model__min_samples_split": [2, 10],
         },
         "gbr": {
-            "model__n_estimators": [200, 500],
-            "model__learning_rate": [0.03, 0.1],
+            "model__n_estimators": [300],
+            "model__learning_rate": [0.05, 0.1],
             "model__max_depth": [2, 3],
         },
     }
@@ -81,7 +87,6 @@ def _evaluate(y_true, y_pred):
     mae = float(mean_absolute_error(y_true, y_pred))
     mse = mean_squared_error(y_true, y_pred)
     rmse = float(np.sqrt(mse))
-
     r2 = float(r2_score(y_true, y_pred))
     return {"mae": mae, "rmse": rmse, "r2": r2}
 
@@ -89,20 +94,20 @@ def _evaluate(y_true, y_pred):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", type=str, default="medical_insurance.csv")
-    ap.add_argument("--target", type=str, default="medical_cost")
+    ap.add_argument("--target", type=str, default="annual_medical_cost")
     ap.add_argument("--test-size", type=float, default=0.2)
     ap.add_argument("--val-size", type=float, default=0.2)
     ap.add_argument("--random-state", type=int, default=42)
-    ap.add_argument("--models", type=str, default="ridge,lasso,elasticnet,rf,gbr,linear")
-    ap.add_argument("--cv", type=int, default=5)
+    ap.add_argument("--models", type=str, default="linear,ridge,lasso")
+    ap.add_argument("--cv", type=int, default=3)
     ap.add_argument("--scoring", type=str, default="neg_root_mean_squared_error")
     ap.add_argument("--outdir", type=str, default="results")
+    ap.add_argument("--n-jobs", type=int, default=1)  # keep stable (parallel can be slower/noisy)
     args = ap.parse_args()
 
     os.makedirs(args.outdir, exist_ok=True)
 
     df = pd.read_csv(args.data)
-
     if args.target not in df.columns:
         raise SystemExit(
             f"Target column '{args.target}' not found. Available columns: {list(df.columns)[:25]}..."
@@ -149,8 +154,9 @@ def main():
                 param_grid=grid,
                 scoring=args.scoring,
                 cv=args.cv,
-                n_jobs=-1,
+                n_jobs=args.n_jobs,
                 refit=True,
+                error_score="raise",
             )
             search.fit(X_train, y_train)
             fitted = search.best_estimator_
@@ -165,17 +171,18 @@ def main():
         val_metrics = _evaluate(y_val, val_pred)
         test_metrics = _evaluate(y_test, test_pred)
 
-        row = {
-            "model": key,
-            "val_mae": val_metrics["mae"],
-            "val_rmse": val_metrics["rmse"],
-            "val_r2": val_metrics["r2"],
-            "test_mae": test_metrics["mae"],
-            "test_rmse": test_metrics["rmse"],
-            "test_r2": test_metrics["r2"],
-            "best_params": json.dumps(best_params, sort_keys=True),
-        }
-        rows.append(row)
+        rows.append(
+            {
+                "model": key,
+                "val_mae": val_metrics["mae"],
+                "val_rmse": val_metrics["rmse"],
+                "val_r2": val_metrics["r2"],
+                "test_mae": test_metrics["mae"],
+                "test_rmse": test_metrics["rmse"],
+                "test_r2": test_metrics["r2"],
+                "best_params": json.dumps(best_params, sort_keys=True),
+            }
+        )
 
         current = test_metrics["rmse"]
         if best_metric is None or current < best_metric:
@@ -187,12 +194,13 @@ def main():
     metrics_path = os.path.join(args.outdir, "metrics_reg.csv")
     metrics_df.to_csv(metrics_path, index=False)
 
+    if best_metric is None:
+        best_metric = 0.0
+
     stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     model_path = os.path.join(args.outdir, f"best_reg_model_{best_key}_{stamp}.joblib")
     joblib.dump(best_overall, model_path)
 
-    if best_metric is None:
-        best_metric = 0.0
     summary = {
         "best_model": best_key,
         "best_test_rmse": float(best_metric),

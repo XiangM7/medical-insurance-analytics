@@ -1,26 +1,25 @@
-# train_classification.py
+# src/train_classification.py
 import argparse
 import json
 import os
+import warnings
 from datetime import datetime
 
+import joblib
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.impute import SimpleImputer
-from sklearn.metrics import (
-    accuracy_score,
-    confusion_matrix,
-    f1_score,
-    matthews_corrcoef,
-    roc_auc_score,
-)
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, matthews_corrcoef, roc_auc_score
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-import joblib
+
+# silence noisy warnings so terminal output is readable
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
 
 
 def _infer_numeric_and_categorical(X: pd.DataFrame):
@@ -50,45 +49,80 @@ def _build_preprocessor(numeric_cols, categorical_cols):
     )
 
 
-def _derive_insurance_quality(df: pd.DataFrame,
-                             deductible_col="deductible",
-                             copay_col="copay",
-                             network_col="network_tier",
-                             plan_col="plan_type"):
-    missing = [c for c in [deductible_col, copay_col, network_col, plan_col] if c not in df.columns]
+def _derive_insurance_quality(
+    df: pd.DataFrame,
+    deductible_col="deductible",
+    network_col="network_tier",
+    plan_col="plan_type",
+    monthly_premium_col="monthly_premium",
+    annual_premium_col="annual_premium",
+):
+    """
+    Derive insurance_quality (low/medium/high) from plan/network and cost-sharing proxies.
+    Robust to repeated values (no qcut label mismatch). Does NOT require copay.
+    """
+    missing = [c for c in [deductible_col, network_col, plan_col] if c not in df.columns]
     if missing:
         raise ValueError(f"Cannot derive insurance_quality; missing columns: {missing}")
 
     net_map = {
         "gold": 3, "silver": 2, "bronze": 1,
-        "tier1": 3, "tier 1": 3, "tier2": 2, "tier 2": 2, "tier3": 1, "tier 3": 1
+        "tier1": 3, "tier 1": 3, "tier2": 2, "tier 2": 2, "tier3": 1, "tier 3": 1,
     }
     plan_map = {
         "ppo": 3, "epo": 2, "hmo": 1,
-        "premium": 3, "standard": 2, "basic": 1
+        "premium": 3, "standard": 2, "basic": 1,
     }
 
-    net = df[network_col].astype(str).str.strip().str.lower().map(net_map).fillna(2)
-    plan = df[plan_col].astype(str).str.strip().str.lower().map(plan_map).fillna(2)
+    net = df[network_col].astype(str).str.strip().str.lower().map(net_map).fillna(2).astype(float)
+    plan = df[plan_col].astype(str).str.strip().str.lower().map(plan_map).fillna(2).astype(float)
 
     deductible = pd.to_numeric(df[deductible_col], errors="coerce")
-    copay = pd.to_numeric(df[copay_col], errors="coerce")
 
-    ded_score = pd.qcut(deductible.rank(method="average"), q=3, labels=[3, 2, 1])
-    copay_score = pd.qcut(copay.rank(method="average"), q=3, labels=[3, 2, 1])
+    if monthly_premium_col in df.columns:
+        premium = pd.to_numeric(df[monthly_premium_col], errors="coerce")
+    elif annual_premium_col in df.columns:
+        premium = pd.to_numeric(df[annual_premium_col], errors="coerce")
+    else:
+        premium = pd.Series([float("nan")] * len(df), index=df.index)
 
+    def _robust_quantile_score(series: pd.Series, q: int = 3, lower_is_better: bool = True) -> pd.Series:
+        s = pd.to_numeric(series, errors="coerce")
+        r = s.rank(method="average")
+        bins = pd.qcut(r, q=q, duplicates="drop")
+        k = bins.cat.categories.size
+        labels = list(range(1, k + 1))
+        out = pd.qcut(r, q=q, labels=labels, duplicates="drop").astype(float)
+        if lower_is_better:
+            return (k + 1) - out  # invert so lower values -> higher score
+        return out
+
+    ded_score = _robust_quantile_score(deductible, q=3, lower_is_better=True)
+    prem_score = _robust_quantile_score(premium, q=3, lower_is_better=True)
+
+    # composite score (higher = better)
     score = (
-        0.30 * plan.astype(float)
-        + 0.25 * net.astype(float)
-        + 0.25 * ded_score.astype(float)
-        + 0.20 * copay_score.astype(float)
+        0.35 * plan
+        + 0.30 * net
+        + 0.20 * ded_score.fillna(ded_score.median())
+        + 0.15 * prem_score.fillna(prem_score.median())
     )
 
-    quality = pd.qcut(score.rank(method="average"), q=3, labels=["low", "medium", "high"])
-    return quality.astype(str)
+    qr = score.rank(method="average")
+    bins = pd.qcut(qr, q=3, duplicates="drop")
+    k = bins.cat.categories.size
+
+    if k == 1:
+        return pd.Series(["medium"] * len(df), index=df.index, dtype=str)
+    if k == 2:
+        q2 = pd.qcut(qr, q=2, labels=["low", "high"], duplicates="drop")
+        return q2.astype(str)
+
+    q3 = pd.qcut(qr, q=3, labels=["low", "medium", "high"], duplicates="drop")
+    return q3.astype(str)
 
 
-def _evaluate(y_true, y_pred, y_proba=None, average="macro"):
+def _evaluate(y_true, y_pred, y_proba=None):
     out = {}
     out["accuracy"] = float(accuracy_score(y_true, y_pred))
     out["f1_macro"] = float(f1_score(y_true, y_pred, average="macro"))
@@ -100,21 +134,11 @@ def _evaluate(y_true, y_pred, y_proba=None, average="macro"):
     out["confusion_matrix"] = cm.tolist()
 
     if y_proba is not None:
-        classes = labels
-        if len(classes) == 2:
-            pos_idx = 1
-            try:
-                out["roc_auc"] = float(roc_auc_score(y_true, y_proba[:, pos_idx]))
-            except Exception:
-                out["roc_auc"] = None
+        if len(labels) == 2:
+            out["roc_auc"] = float(roc_auc_score(y_true, y_proba[:, 1]))
         else:
-            try:
-                out["roc_auc_ovr_macro"] = float(
-                    roc_auc_score(y_true, y_proba, multi_class="ovr", average="macro")
-                )
-            except Exception:
-                out["roc_auc_ovr_macro"] = None
-
+            out["roc_auc_ovr_macro"] = float(
+            )
     return out
 
 
@@ -126,9 +150,10 @@ def main():
     ap.add_argument("--test-size", type=float, default=0.2)
     ap.add_argument("--val-size", type=float, default=0.2)
     ap.add_argument("--random-state", type=int, default=42)
-    ap.add_argument("--models", type=str, default="logreg_l2,logreg_l1,rf,gbr")
-    ap.add_argument("--cv", type=int, default=5)
-    ap.add_argument("--outdir", type=str, default="results")
+    ap.add_argument("--models", type=str, default="logreg_l2,logreg_l1")
+    ap.add_argument("--cv", type=int, default=3)
+    ap.add_argument("--outdir", type=str, default="results_cls")
+    ap.add_argument("--n-jobs", type=int, default=1)
     args = ap.parse_args()
 
     os.makedirs(args.outdir, exist_ok=True)
@@ -141,8 +166,7 @@ def main():
 
     if args.target not in df.columns:
         raise SystemExit(
-            f"Target column '{args.target}' not found. "
-            f"Use --derive-target to create it, or choose an existing target."
+            f"Target column '{args.target}' not found. Use --derive-target or choose an existing target."
         )
 
     y = df[args.target].astype(str)
@@ -163,12 +187,17 @@ def main():
     numeric_cols, categorical_cols = _infer_numeric_and_categorical(X_train)
     pre = _build_preprocessor(numeric_cols, categorical_cols)
 
+    # Use saga for both L2 and L1 so multiclass is supported.
     model_defs = {
         "logreg_l2": LogisticRegression(
-            penalty="l2", solver="lbfgs", max_iter=5000, n_jobs=-1
+            solver="saga",
+            max_iter=5000,
+            penalty="l2",
         ),
         "logreg_l1": LogisticRegression(
-            penalty="l1", solver="liblinear", max_iter=5000
+            solver="saga",
+            max_iter=5000,
+            penalty="l1",
         ),
         "rf": RandomForestClassifier(random_state=args.random_state, n_jobs=-1),
         "gbr": GradientBoostingClassifier(random_state=args.random_state),
@@ -177,8 +206,8 @@ def main():
     param_grids = {
         "logreg_l2": {"model__C": [0.1, 1.0, 10.0], "model__class_weight": [None, "balanced"]},
         "logreg_l1": {"model__C": [0.1, 1.0, 10.0], "model__class_weight": [None, "balanced"]},
-        "rf": {"model__n_estimators": [300, 600], "model__max_depth": [None, 8, 14]},
-        "gbr": {"model__n_estimators": [200, 500], "model__learning_rate": [0.03, 0.1], "model__max_depth": [2, 3]},
+        "rf": {"model__n_estimators": [400], "model__max_depth": [None, 12]},
+        "gbr": {"model__n_estimators": [300], "model__learning_rate": [0.05, 0.1], "model__max_depth": [2, 3]},
     }
 
     chosen = [m.strip() for m in args.models.split(",") if m.strip()]
@@ -195,14 +224,14 @@ def main():
         pipe = Pipeline(steps=[("preprocess", pre), ("model", model_defs[key])])
         grid = param_grids.get(key, {})
 
-        scoring = "f1_macro"
         search = GridSearchCV(
             pipe,
             param_grid=grid,
-            scoring=scoring,
+            scoring="f1_macro",
             cv=args.cv,
-            n_jobs=-1,
+            n_jobs=args.n_jobs,
             refit=True,
+            error_score="raise",
         )
         search.fit(X_train, y_train)
         fitted = search.best_estimator_
@@ -227,11 +256,10 @@ def main():
             "test_mcc": test_metrics["mcc"],
             "best_params": json.dumps(best_params, sort_keys=True),
         }
-
         if "roc_auc" in test_metrics:
-            row["test_roc_auc"] = test_metrics.get("roc_auc")
+            row["test_roc_auc"] = test_metrics["roc_auc"]
         if "roc_auc_ovr_macro" in test_metrics:
-            row["test_roc_auc_ovr_macro"] = test_metrics.get("roc_auc_ovr_macro")
+            row["test_roc_auc_ovr_macro"] = test_metrics["roc_auc_ovr_macro"]
 
         rows.append(row)
 
@@ -253,12 +281,13 @@ def main():
     metrics_path = os.path.join(args.outdir, "metrics_cls.csv")
     metrics_df.to_csv(metrics_path, index=False)
 
+    if best_metric is None:
+        best_metric = 0.0
+
     stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     model_path = os.path.join(args.outdir, f"best_cls_model_{best_key}_{stamp}.joblib")
     joblib.dump(best_overall, model_path)
 
-    if best_metric is None:
-        best_metric = 0.0
     summary = {
         "best_model": best_key,
         "best_test_mcc": float(best_metric),
@@ -276,3 +305,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
