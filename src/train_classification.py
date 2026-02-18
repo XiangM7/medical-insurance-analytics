@@ -141,7 +141,6 @@ def _evaluate(y_true, y_pred, y_proba=None):
             )
     return out
 
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", type=str, default="medical_insurance.csv")
