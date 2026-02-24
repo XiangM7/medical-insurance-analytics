@@ -93,3 +93,69 @@ if (
 
 else:
     print("\n[ROC/AUC NOTE] Set TARGET_COL and PRED_SCORE_COL (probabilities) to compute ROC and AUC.")
+
+TARGET_COL     = "high_cost"        # your binary 0/1 label column
+PRED_LABEL_COL = "high_cost_pred"   # hard predictions (0/1)
+PRED_SCORE_COL = "high_cost_score"  # model probability of class 1
+
+
+
+import matplotlib.pyplot as plt
+
+def visualize_roc(fpr_vals, tpr_vals, thresholds, roc_auc, output_path="roc_curve.png"):
+    """Plot and save an annotated ROC curve."""
+    fig, ax = plt.subplots(figsize=(7, 6))
+
+    # ROC curve with fill
+    ax.fill_between(fpr_vals, tpr_vals, alpha=0.10)
+    ax.plot(fpr_vals, tpr_vals, lw=2.5, label=f"ROC (AUC = {roc_auc:.3f})")
+
+    # Random-chance diagonal
+    ax.plot([0, 1], [0, 1], linestyle="--", lw=1.5, color="gray", label="Random chance")
+
+    # Threshold markers at 5 evenly-spaced points
+    idx = np.linspace(0, len(thresholds) - 1, 7, dtype=int)[1:-1]
+    for i in idx:
+        ax.scatter(fpr_vals[i], tpr_vals[i], s=60, zorder=5)
+        ax.annotate(
+            f"t={thresholds[i]:.2f}",
+            (fpr_vals[i], tpr_vals[i]),
+            textcoords="offset points",
+            xytext=(6, 4),
+            fontsize=8,
+        )
+
+    ax.set_xlim([0, 1])
+    ax.set_ylim([0, 1.02])
+    ax.set_xlabel("FPR (1 − Specificity)", fontsize=11)
+    ax.set_ylabel("TPR (Recall / Sensitivity)", fontsize=11)
+    ax.set_title("ROC Curve — Medical Insurance Classifier", fontsize=13)
+    ax.legend(loc="lower right", fontsize=10)
+    ax.grid(alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=150)
+    plt.close()
+    print(f"\nROC plot saved → {output_path}")
+
+
+# Inside the existing ROC block, after computing fpr_vals/tpr_vals/roc_auc:
+if (
+    TARGET_COL is not None
+    and PRED_SCORE_COL is not None
+    and TARGET_COL in df.columns
+    and PRED_SCORE_COL in df.columns
+):
+    y_true  = df[TARGET_COL].values
+    y_score = df[PRED_SCORE_COL].values
+
+    fpr_vals, tpr_vals, thresholds = roc_curve(y_true, y_score)
+    roc_auc = auc(fpr_vals, tpr_vals)
+
+    print("\nROC curve points (first 10):")
+    for i in range(min(10, len(thresholds))):
+        print(f"  Threshold={thresholds[i]:.3f}, FPR={fpr_vals[i]:.3f}, TPR={tpr_vals[i]:.3f}")
+
+    print("\nArea Under the ROC Curve (AUC):", roc_auc)
+
+    # ← NEW: generate the plot
+    visualize_roc(fpr_vals, tpr_vals, thresholds, roc_auc)
