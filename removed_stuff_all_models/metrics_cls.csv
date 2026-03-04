@@ -1,0 +1,5 @@
+model,val_accuracy,val_f1_macro,val_mcc,test_accuracy,test_f1_macro,test_mcc,best_params,test_roc_auc_ovr_macro
+gbr,0.4388,0.3934360736626083,0.1520281171345072,0.43515,0.38820543199854757,0.14609514537062848,"{""model__learning_rate"": 0.1, ""model__max_depth"": 3, ""model__n_estimators"": 300}",0.0
+rf,0.437,0.39197224671730774,0.14896717955705918,0.4323,0.38743358441817294,0.14105713245903334,"{""model__max_depth"": null, ""model__n_estimators"": 400}",0.0
+logreg_l1,0.40345,0.3991672130452024,0.10352284075157764,0.3959,0.39153969521764614,0.09204765536269624,"{""model__C"": 0.1, ""model__class_weight"": ""balanced""}",0.0
+logreg_l2,0.40355,0.39958817177938405,0.10376750439979254,0.3958,0.39168563794643396,0.09193345192402065,"{""model__C"": 0.1, ""model__class_weight"": ""balanced""}",0.0

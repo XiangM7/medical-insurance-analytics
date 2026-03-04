@@ -144,7 +144,7 @@ def _evaluate(y_true, y_pred, y_proba=None):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", type=str, default="medical_insurance.csv")
-    ap.add_argument("--target", type=str, default="insurance_quality")
+    ap.add_argument("--target", type=str, default="is_high_risk")
     ap.add_argument("--derive-target", action="store_true")
     ap.add_argument("--test-size", type=float, default=0.2)
     ap.add_argument("--val-size", type=float, default=0.2)
@@ -169,7 +169,8 @@ def main():
         )
 
     y = df[args.target].astype(str)
-    X = df.drop(columns=[args.target])
+    # removed automatically selecting target temporarily, was not working with removing mutliple columns
+    X = df.drop(columns=["is_high_risk", "risk_score"])
 
     X_trainval, X_test, y_trainval, y_test = train_test_split(
         X, y, test_size=args.test_size, random_state=args.random_state, stratify=y
