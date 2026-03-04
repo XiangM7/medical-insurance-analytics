@@ -1,0 +1,9 @@
+{
+  "best_model": "gbr",
+  "best_test_mcc": 0.9996992790041209,
+  "metrics_csv": "results_cls/metrics_cls.csv",
+  "model_artifact": "results_cls/best_cls_model_gbr_20260301_224436.joblib",
+  "target": "insurance_quality",
+  "data": "../medical_insurance.csv",
+  "derived_target": true
+}

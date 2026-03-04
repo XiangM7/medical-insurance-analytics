@@ -1,0 +1,9 @@
+{
+  "best_model": "logreg_l2",
+  "best_test_mcc": 0.8197973410305727,
+  "metrics_csv": "results_cls/metrics_cls.csv",
+  "model_artifact": "results_cls/best_cls_model_logreg_l2_20260301_215338.joblib",
+  "target": "insurance_quality",
+  "data": "medical_insurance.csv",
+  "derived_target": true
+}
