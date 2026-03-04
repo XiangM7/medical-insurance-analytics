@@ -9,6 +9,7 @@ const links = [
   { href: "/confusion-matrices", label: "Confusion Matrices", icon: "⊟" },
   { href: "/eda", label: "EDA Explorer", icon: "◉" },
   { href: "/dataset", label: "Dataset Overview", icon: "⊡" },
+  { href: "/presentation", label: "Presentation", icon: "▷" },
 ];
 
 export default function Sidebar() {
