@@ -5,10 +5,8 @@ import { usePathname } from "next/navigation";
 
 const links = [
   { href: "/", label: "Dashboard", icon: "⊞" },
-  { href: "/model-performance", label: "Model Performance", icon: "◈" },
-  { href: "/confusion-matrices", label: "Confusion Matrices", icon: "⊟" },
-  { href: "/eda", label: "EDA Explorer", icon: "◉" },
   { href: "/dataset", label: "Dataset Overview", icon: "⊡" },
+  { href: "/predict", label: "Live Demo", icon: "▶" },
   { href: "/presentation", label: "Presentation", icon: "▷" },
 ];
 
