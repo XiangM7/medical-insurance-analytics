@@ -43,6 +43,11 @@ export default function RegressionChart({ metrics, split }: Props) {
     borderRadius: 6,
     fontSize: 12,
   };
+  const tooltipExtra = {
+    itemStyle: { color: "#e5e5e5" },
+    labelStyle: { color: "#737373" },
+    cursor: { fill: "rgba(255,255,255,0.05)" },
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -53,7 +58,7 @@ export default function RegressionChart({ metrics, split }: Props) {
             <CartesianGrid strokeDasharray="3 3" stroke="#262626" />
             <XAxis dataKey="name" tick={{ fill: "#737373", fontSize: 10 }} />
             <YAxis tick={{ fill: "#737373", fontSize: 10 }} />
-            <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => typeof v === "number" ? v.toFixed(2) : String(v ?? "")} />
+            <Tooltip contentStyle={tooltipStyle} {...tooltipExtra} formatter={(v: unknown) => typeof v === "number" ? v.toFixed(2) : String(v ?? "")} />
             <Bar dataKey="MAE" fill="#ef4444" radius={[2, 2, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
@@ -65,7 +70,7 @@ export default function RegressionChart({ metrics, split }: Props) {
             <CartesianGrid strokeDasharray="3 3" stroke="#262626" />
             <XAxis dataKey="name" tick={{ fill: "#737373", fontSize: 10 }} />
             <YAxis tick={{ fill: "#737373", fontSize: 10 }} />
-            <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => typeof v === "number" ? v.toFixed(2) : String(v ?? "")} />
+            <Tooltip contentStyle={tooltipStyle} {...tooltipExtra} formatter={(v: unknown) => typeof v === "number" ? v.toFixed(2) : String(v ?? "")} />
             <Bar dataKey="RMSE" fill="#f59e0b" radius={[2, 2, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
@@ -77,7 +82,7 @@ export default function RegressionChart({ metrics, split }: Props) {
             <CartesianGrid strokeDasharray="3 3" stroke="#262626" />
             <XAxis dataKey="name" tick={{ fill: "#737373", fontSize: 10 }} />
             <YAxis domain={[0, 1]} tick={{ fill: "#737373", fontSize: 10 }} />
-            <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => typeof v === "number" ? v.toFixed(4) : String(v ?? "")} />
+            <Tooltip contentStyle={tooltipStyle} {...tooltipExtra} formatter={(v: unknown) => typeof v === "number" ? v.toFixed(4) : String(v ?? "")} />
             <Bar dataKey="R2" fill="#22c55e" radius={[2, 2, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>

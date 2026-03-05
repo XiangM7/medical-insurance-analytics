@@ -40,6 +40,12 @@ export default function DatasetClient({ features }: Props) {
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count);
 
+  const tooltipExtra = {
+    itemStyle: { color: "#e5e5e5" } as React.CSSProperties,
+    labelStyle: { color: "#737373" } as React.CSSProperties,
+    cursor: { fill: "rgba(255,255,255,0.05)" },
+  };
+
   const dtypeColors: Record<string, string> = {
     int64: "#f59e0b",
     float64: "#22c55e",
@@ -75,7 +81,7 @@ export default function DatasetClient({ features }: Props) {
               <CartesianGrid strokeDasharray="3 3" stroke="#262626" />
               <XAxis dataKey="name" tick={{ fill: "#737373", fontSize: 11 }} />
               <YAxis tick={{ fill: "#737373", fontSize: 11 }} />
-              <Tooltip contentStyle={tooltipStyle} />
+              <Tooltip contentStyle={tooltipStyle} {...tooltipExtra} />
               <Bar dataKey="count" radius={[2, 2, 0, 0]}>
                 {dtypeData.map((entry) => (
                   <Cell key={entry.name} fill={dtypeColors[entry.name] ?? "#737373"} />
@@ -92,12 +98,13 @@ export default function DatasetClient({ features }: Props) {
             <p className="text-sm text-muted">No missing values in any feature.</p>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={missingData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#262626" />
+              <BarChart data={missingData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }} style={{ backgroundColor: "transparent" }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#262626" fill="transparent" />
                 <XAxis dataKey="name" tick={{ fill: "#737373", fontSize: 11 }} />
                 <YAxis tick={{ fill: "#737373", fontSize: 11 }} />
                 <Tooltip
                   contentStyle={tooltipStyle}
+                  {...tooltipExtra}
                   formatter={(v: unknown) => typeof v === "number" ? v.toLocaleString() : String(v ?? "")}
                 />
                 <Bar dataKey="missing" fill="#ef4444" radius={[2, 2, 0, 0]} />

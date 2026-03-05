@@ -33,12 +33,10 @@ export default function ClassificationChart({ metrics, split }: Props) {
         <XAxis dataKey="name" tick={{ fill: "#737373", fontSize: 11 }} />
         <YAxis domain={[0, 1]} tick={{ fill: "#737373", fontSize: 11 }} />
         <Tooltip
-          contentStyle={{
-            backgroundColor: "#1a1a1a",
-            border: "1px solid #262626",
-            borderRadius: 6,
-            fontSize: 12,
-          }}
+          contentStyle={{ backgroundColor: "#1a1a1a", border: "1px solid #262626", borderRadius: 6, fontSize: 12 }}
+          itemStyle={{ color: "#e5e5e5" }}
+          labelStyle={{ color: "#737373" }}
+          cursor={{ fill: "rgba(255,255,255,0.05)" }}
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           formatter={(val: any) => typeof val === "number" ? val.toFixed(4) : String(val ?? "")}
         />

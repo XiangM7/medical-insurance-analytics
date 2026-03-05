@@ -33,6 +33,18 @@ body {
   color: var(--foreground);
 }
 
+/* Recharts transparent background */
+.recharts-wrapper,
+.recharts-surface {
+  background: transparent !important;
+}
+.recharts-cartesian-grid-bg {
+  fill: transparent !important;
+}
+.recharts-wrapper svg {
+  background: transparent !important;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

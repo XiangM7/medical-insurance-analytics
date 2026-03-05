@@ -56,7 +56,7 @@ export default function FeatureTable({ features }: Props) {
     val != null ? (
       <span className="font-mono">{fmt(val, 2)}</span>
     ) : (
-      <span className="text-muted/50">—</span>
+      <span className="text-muted/50">-</span>
     );
 
   return (
