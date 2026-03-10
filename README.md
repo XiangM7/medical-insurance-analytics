@@ -36,7 +36,6 @@ In order to effectively classify our data, applying logistic regression to all r
 - Python 3.8+
 - pip or conda
 
-- ADD ROC AUC AND MCC LATER
 
 
 ### Installation
