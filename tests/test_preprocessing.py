@@ -9,7 +9,6 @@ from src.data_preprocessing import MedicalInsurancePreprocessor
 
 @pytest.fixture
 def sample_data():
-    """Create sample data for testing."""
     data = {
         'age': [25, 30, 35, 40, 45],
         'income': [50000, 60000, 70000, 80000, 90000],
@@ -23,14 +22,12 @@ def sample_data():
     return pd.DataFrame(data)
 
 def test_preprocessor_initialization():
-    """Test preprocessor initialization."""
     preprocessor = MedicalInsurancePreprocessor()
     assert preprocessor is not None
     assert len(preprocessor.numerical_features) > 0
     assert len(preprocessor.categorical_features) > 0
 
 def test_fit_transform(sample_data):
-    """Test fit_transform method."""
     preprocessor = MedicalInsurancePreprocessor()
     processed = preprocessor.fit_transform(sample_data)
     
@@ -39,7 +36,6 @@ def test_fit_transform(sample_data):
     assert not processed.isnull().any().any()
 
 def test_missing_values_handling():
-    """Test handling of missing values."""
     data = pd.DataFrame({
         'age': [25, np.nan, 35, 40, 45],
         'income': [50000, 60000, np.nan, 80000, 90000],

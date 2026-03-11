@@ -10,7 +10,6 @@ from plotly.subplots import make_subplots
 import pandas as pd # type: ignore
 
 class MedicalInsuranceVisualizer:
-    """Visualizer for medical insurance data."""
     
     def __init__(self, style='seaborn'):
         plt.style.use(style)

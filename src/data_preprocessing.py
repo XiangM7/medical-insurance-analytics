@@ -9,9 +9,7 @@ from sklearn.impute import SimpleImputer # type: ignore
 from sklearn.compose import ColumnTransformer # type: ignore
 from sklearn.pipeline import Pipeline # type: ignore
 
-class MedicalInsurancePreprocessor:
-    """Preprocessor for medical insurance data."""
-    
+class MedicalInsurancePreprocessor:    
     def __init__(self):
         self.numerical_features = [
             'age', 'income', 'household_size', 'dependents', 'bmi',
@@ -44,7 +42,6 @@ class MedicalInsurancePreprocessor:
         self.preprocessor = None
         
     def fit_transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Fit and transform the data."""
         # Create preprocessing pipeline
         numerical_pipeline = Pipeline([
             ('imputer', SimpleImputer(strategy='median')),
@@ -69,15 +66,12 @@ class MedicalInsurancePreprocessor:
         )
     
     def _get_feature_names(self) -> list:
-        """Get feature names after preprocessing."""
         feature_names = []
         
         # Numerical features
         feature_names.extend(self.numerical_features)
         
         # Categorical features (will be expanded by OneHotEncoder)
-        # In practice, we'd extract these from the preprocessor
-        # For simplicity, returning placeholder
         feature_names.extend([f'cat_{i}' for i in range(len(self.categorical_features) * 5)])  # Approximate
         
         # Binary and procedure features
