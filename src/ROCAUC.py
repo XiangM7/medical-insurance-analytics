@@ -29,9 +29,28 @@ df.describe(include="all").transpose().to_csv("eda_summary.csv")
 df.isna().sum().to_csv("eda_missing.csv")
 df.dtypes.to_csv("eda_dtypes.csv")
 
-TARGET_COL     = "high_cost"        # binary 0/1 label column
-PRED_LABEL_COL = "high_cost_pred"   # hard predictions (0/1)
-PRED_SCORE_COL = "high_cost_score"  # model probability of class 1
+import joblib
+import glob
+import os
+
+# Load the best saved classifier from train_classification.py's output 
+model_files = glob.glob("results_cls/best_cls_model_*.joblib")
+
+# Pick the most recently saved model
+model_path = max(model_files, key=os.path.getmtime)
+clf = joblib.load(model_path)
+print(f"Loaded model: {model_path}")
+
+#  train_classification.py drops is_high_risk and risk_score from X
+TARGET_COL     = "is_high_risk"
+PRED_LABEL_COL = "high_cost_pred"
+PRED_SCORE_COL = "high_cost_score"
+
+X_full = df.drop(columns=["is_high_risk", "risk_score"])
+
+#  Generate prediction columns  
+df[PRED_LABEL_COL] = clf.predict(X_full)
+df[PRED_SCORE_COL] = clf.predict_proba(X_full)[:, 1]
 
 
 # Confusion matrix + MCC + rates 

@@ -52,7 +52,6 @@ class MedicalInsuranceVisualizer:
         return fig
     
     def plot_interactive_dashboard(self, df: pd.DataFrame):
-        """Create interactive Plotly dashboard."""
         fig = make_subplots(
             rows=2, cols=3,
             subplot_titles=('Medical Cost by Age', 'Premium by Plan Type',
