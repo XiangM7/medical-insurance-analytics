@@ -1,9 +1,9 @@
 {
-  "best_model": "logreg_l2",
-  "best_test_mcc": 0.8197973410305727,
+  "best_model": "logreg_l1",
+  "best_test_mcc": 0.9407535856794867,
   "metrics_csv": "results_cls/metrics_cls.csv",
-  "model_artifact": "results_cls/best_cls_model_logreg_l2_20260301_215338.joblib",
-  "target": "insurance_quality",
+  "model_artifact": "results_cls/best_cls_model_logreg_l1_20260312_085418.joblib",
+  "target": "is_high_risk",
   "data": "medical_insurance.csv",
-  "derived_target": true
+  "derived_target": false
 }

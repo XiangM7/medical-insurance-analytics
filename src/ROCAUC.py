@@ -49,8 +49,8 @@ PRED_SCORE_COL = "high_cost_score"
 X_full = df.drop(columns=["is_high_risk", "risk_score"])
 
 #  Generate prediction columns  
-df[PRED_LABEL_COL] = clf.predict(X_full)
-df[PRED_SCORE_COL] = clf.predict_proba(X_full)[:, 1]
+df[PRED_LABEL_COL] = clf.predict(X_full)          # strings '0'/'1'
+df[PRED_SCORE_COL] = clf.predict_proba(X_full)[:, 1]  # float
 
 
 # Confusion matrix + MCC + rates 
@@ -60,7 +60,7 @@ if (
     and TARGET_COL in df.columns
     and PRED_LABEL_COL in df.columns
 ):
-    y_true = df[TARGET_COL].values
+    y_true = df[TARGET_COL].astype(str).values   # cast int -> str to match '0'/'1'
     y_pred = df[PRED_LABEL_COL].values
 
     # Confusion matrix
@@ -94,10 +94,10 @@ if (
     and TARGET_COL in df.columns
     and PRED_SCORE_COL in df.columns
 ):
-    y_true = df[TARGET_COL].values
-    y_score = df[PRED_SCORE_COL].values
-
-    fpr_vals, tpr_vals, thresholds = roc_curve(y_true, y_score)
+    y_true_num = df[TARGET_COL].astype(int).values   # keep numeric for roc_curve
+    y_score    = df[PRED_SCORE_COL].values
+    fpr_vals, tpr_vals, thresholds = roc_curve(y_true_num, y_score)
+    
     roc_auc = auc(fpr_vals, tpr_vals)
 
     print("\nROC curve points (first 10):")

@@ -1,2 +1,3 @@
-model,val_accuracy,val_f1_macro,val_mcc,test_accuracy,test_f1_macro,test_mcc,best_params,test_roc_auc_ovr_macro
-logreg_l2,0.8816,0.8811511288322649,0.822139090129129,0.88005,0.8795488029015534,0.8197973410305727,"{""model__C"": 10.0, ""model__class_weight"": ""balanced""}",0.0
+model,val_accuracy,val_f1_macro,val_mcc,test_accuracy,test_f1_macro,test_mcc,best_params,test_roc_auc
+logreg_l1,0.96815,0.9657590186115457,0.9315180873277714,0.97245,0.9703767676504647,0.9407535856794867,"{""model__C"": 0.1, ""model__class_weight"": null}",0.9976611577100535
+logreg_l2,0.96835,0.9659778972587802,0.9319560673150896,0.97235,0.9702743128605726,0.9405486760770637,"{""model__C"": 10.0, ""model__class_weight"": null}",0.9976505136090531
