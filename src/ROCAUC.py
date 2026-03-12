@@ -5,20 +5,19 @@ from sklearn.metrics import matthews_corrcoef, confusion_matrix, roc_curve, auc
 # Load data
 df = pd.read_csv("medical_insurance.csv")
 
-# ---- Basic structure ----
+# Basic structure 
 print("Shape (rows, columns):", df.shape)
 print("\nColumn names:\n", df.columns.tolist())
 
 print("\nData types:\n", df.dtypes)
 
-# ---- Missing values ----
+#  Missing values 
 print("\nMissing values per column:\n", df.isna().sum())
 
-# ---- Descriptive statistics ----
 print("\nSummary statistics (numeric and categorical):\n")
 print(df.describe(include="all").transpose())
 
-# ---- Correlation matrix for numeric features ----
+#  Correlation matrix for numeric features 
 num_cols = df.select_dtypes(include=["int64", "float64"]).columns
 corr = df[num_cols].corr()
 print("\nCorrelation matrix (numeric features):\n")
@@ -30,9 +29,10 @@ df.describe(include="all").transpose().to_csv("eda_summary.csv")
 df.isna().sum().to_csv("eda_missing.csv")
 df.dtypes.to_csv("eda_dtypes.csv")
 
-TARGET_COL = None      # e.g., "high_cost"
-PRED_LABEL_COL = None  # e.g., "high_cost_pred" (0/1)
-PRED_SCORE_COL = None  # e.g., "high_cost_score" (probability of class 1)
+TARGET_COL     = "high_cost"        # binary 0/1 label column
+PRED_LABEL_COL = "high_cost_pred"   # hard predictions (0/1)
+PRED_SCORE_COL = "high_cost_score"  # model probability of class 1
+
 
 # Confusion matrix + MCC + rates 
 if (
@@ -94,16 +94,11 @@ if (
 else:
     print("\n[ROC/AUC NOTE] Set TARGET_COL and PRED_SCORE_COL (probabilities) to compute ROC and AUC.")
 
-TARGET_COL     = "high_cost"        # your binary 0/1 label column
-PRED_LABEL_COL = "high_cost_pred"   # hard predictions (0/1)
-PRED_SCORE_COL = "high_cost_score"  # model probability of class 1
-
 
 
 import matplotlib.pyplot as plt
 
 def visualize_roc(fpr_vals, tpr_vals, thresholds, roc_auc, output_path="roc_curve.png"):
-    """Plot and save an annotated ROC curve."""
     fig, ax = plt.subplots(figsize=(7, 6))
 
     # ROC curve with fill
@@ -135,10 +130,8 @@ def visualize_roc(fpr_vals, tpr_vals, thresholds, roc_auc, output_path="roc_curv
     plt.tight_layout()
     plt.savefig(output_path, dpi=150)
     plt.close()
-    print(f"\nROC plot saved → {output_path}")
 
 
-# Inside the existing ROC block, after computing fpr_vals/tpr_vals/roc_auc:
 if (
     TARGET_COL is not None
     and PRED_SCORE_COL is not None
@@ -155,7 +148,15 @@ if (
     for i in range(min(10, len(thresholds))):
         print(f"  Threshold={thresholds[i]:.3f}, FPR={fpr_vals[i]:.3f}, TPR={tpr_vals[i]:.3f}")
 
-    print("\nArea Under the ROC Curve (AUC):", roc_auc)
+    #path-force printing ROC graph
+    from pathlib import Path
+    import os
 
-    # ← NEW: generate the plot
-    visualize_roc(fpr_vals, tpr_vals, thresholds, roc_auc)
+    downloads = Path.home() / "Downloads"
+    downloads.mkdir(exist_ok=True)  
+    output_path = str(downloads / "roc_curve.png")
+    print("Saving ROC curve to:", output_path)
+
+    visualize_roc(fpr_vals, tpr_vals, thresholds, roc_auc, output_path=output_path)
+
+    print("File exists:", os.path.exists(output_path))

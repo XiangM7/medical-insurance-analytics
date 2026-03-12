@@ -58,7 +58,6 @@ def main():
     print(f"Saved processed data to: {processed_path}")
     
     # Create visualizations
-    print("\nCreating visualizations...")
     visualizer = MedicalInsuranceVisualizer()
     
     # Static plots
@@ -69,7 +68,6 @@ def main():
     fig_interactive = visualizer.plot_interactive_dashboard(df)
     fig_interactive.write_html('reports/figures/interactive_dashboard.html')
     
-    print("\nAnalysis complete!")
     print(f"Reports saved to: reports/figures/")
 
 if __name__ == "__main__":
